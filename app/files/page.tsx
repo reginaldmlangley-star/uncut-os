@@ -13,7 +13,7 @@ type StorageFile = {
   name: string;
   id: string;
   updated_at: string;
-  size: number;
+  size?: number;
   downloadUrl?: string;
 };
 
@@ -158,7 +158,7 @@ export default function FilesPage() {
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <p className="font-semibold text-white">{file.name}</p>
-                          <p className="text-sm text-slate-400">{(file.size / 1024).toFixed(2)} KB</p>
+                          <p className="text-sm text-slate-400">{file.size ? `${(file.size / 1024).toFixed(2)} KB` : "Size unknown"}</p>
                         </div>
                         <a
                           href={file.downloadUrl}
