@@ -12,9 +12,8 @@ const supabase = createClient(
 type StorageFile = {
   name: string;
   id: string;
-  updated_at: string;
   size?: number;
-  downloadUrl?: string;
+  downloadUrl: string;
 };
 
 export default function FilesPage() {
@@ -46,14 +45,15 @@ export default function FilesPage() {
     }
 
     const filesWithUrls = await Promise.all(
-      data.map(async (file) => {
-        const { data: urlData, error: urlError } = await supabase.storage
+      data.map(async (file: any) => {
+        const { data: urlData } = await supabase.storage
           .from("uncut-files")
           .createSignedUrl(file.name, 60);
 
         return {
-          ...file,
-          id: file.id || '',
+          name: file.name,
+          id: file.id ?? "",
+          size: file.size ?? undefined,
           downloadUrl: urlData?.signedUrl ?? "",
         };
       })
