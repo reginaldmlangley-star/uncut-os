@@ -17,27 +17,28 @@ export default function LoginPage() {
 
   async function handleLogin() {
     console.log("Login attempt started with email:", email);
-
-    if (!email || !password) {
-      const errorMsg = "Please enter both email and password.";
-      console.error(errorMsg);
-      alert(errorMsg);
-      return;
-    }
-
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      const missing = [];
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push("NEXT_PUBLIC_SUPABASE_URL");
-      if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-      const message = `Missing Supabase env vars: ${missing.join(", ")}`;
-      console.error(message);
-      alert(message);
-      return;
-    }
-
-    console.log("Supabase client initialized with URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log('CLIENT_KEYS_CHECK:', !!process.env.NEXT_PUBLIC_SUPABASE_URL);
 
     try {
+      if (!email || !password) {
+        const errorMsg = "Please enter both email and password.";
+        console.error(errorMsg);
+        window.alert(errorMsg);
+        return;
+      }
+
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        const missing = [];
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push("NEXT_PUBLIC_SUPABASE_URL");
+        if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+        const message = `Missing Supabase env vars: ${missing.join(", ")}`;
+        console.error(message);
+        window.alert(message);
+        return;
+      }
+
+      console.log("Supabase client initialized with URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+
       console.log("Calling supabase.auth.signInWithPassword...");
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -46,16 +47,16 @@ export default function LoginPage() {
 
       if (error) {
         console.error("Supabase login error:", error);
-        alert(`Login failed: ${error.message}`);
+        window.alert(`Login failed: ${error.message}`);
         return;
       }
 
       console.log("Login successful:", data);
-      alert("Success!");
+      window.alert("Success!");
       router.push("/files");
     } catch (err) {
       console.error("Unexpected login error:", err);
-      alert("An unexpected error occurred. Check the console.");
+      window.alert("An unexpected error occurred. Check the console.");
     }
   }
 
