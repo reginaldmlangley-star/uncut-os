@@ -53,6 +53,7 @@ export default function FilesPage() {
 
         return {
           ...file,
+          id: file.id || '',
           downloadUrl: urlData?.signedUrl ?? "",
         };
       })
