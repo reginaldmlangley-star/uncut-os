@@ -1,0 +1,162 @@
+"use client";
+
+import { useState } from "react";
+
+export default function DashboardPage() {
+  const [fighterName, setFighterName] = useState("");
+  const [fighterRole, setFighterRole] = useState("");
+  const [fighterPower, setFighterPower] = useState("");
+
+  function handleAddFighter(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!fighterName || !fighterRole) {
+      window.alert("Enter fighter name and role to add.");
+      return;
+    }
+    window.alert(`Added fighter: ${fighterName} (${fighterRole})`);
+    setFighterName("");
+    setFighterRole("");
+    setFighterPower("");
+  }
+
+  const statusItems = [
+    { label: "Campaign Momentum", value: "92%", bronze: true },
+    { label: "Active Threads", value: "8", bronze: false },
+    { label: "NPC Heat", value: "74%", bronze: true },
+    { label: "Session Readiness", value: "Ready", bronze: false },
+  ];
+
+  const contentIdeas = [
+    "Immersive fight club broadcast with hidden lore reveals",
+    "Bronze alliance fighter showcase video series",
+    "Daily battle debrief podcast clip for premium members",
+  ];
+
+  return (
+    <main className="min-h-screen bg-[#050505] text-slate-100">
+      <div className="mx-auto max-w-7xl px-6 py-12">
+        <header className="mb-10 overflow-hidden rounded-[2rem] border border-[#b07b2e] bg-[#0c0c0c]/95 p-8 shadow-[0_30px_120px_rgba(0,0,0,0.45)]">
+          <div className="flex flex-col gap-8 xl:flex-row xl:items-center xl:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Media Empire</p>
+              <h1 className="mt-4 text-5xl font-black tracking-tight text-amber-100">UNCUT OS V1</h1>
+              <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-300">
+                Command center for your crew, content, and live execution.
+              </p>
+            </div>
+            <div className="rounded-[1.75rem] border border-[#b07b2e]/40 bg-[#111111] px-6 py-5 text-right">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Daily Execution Score</p>
+              <div className="mt-4 h-4 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-amber-300" style={{ width: "78%" }} />
+              </div>
+              <p className="mt-4 text-3xl font-semibold text-amber-100">78%</p>
+              <p className="text-sm text-slate-400">Keep the momentum high and deliver every mission.</p>
+            </div>
+          </div>
+        </header>
+
+        <div className="grid gap-8 xl:grid-cols-[1.4fr_0.95fr]">
+          <section className="space-y-8">
+            <div className="rounded-[2rem] border border-[#b07b2e]/30 bg-[#0b0b0b]/95 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.4)]">
+              <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Add Fighter</p>
+              <h2 className="mt-4 text-3xl font-semibold text-white">Recruit a new warrior</h2>
+              <p className="mt-3 text-slate-400">
+                Use the V1 fighter roster to keep your squad sharp and battle-ready.
+              </p>
+              <form className="mt-6 grid gap-4 sm:grid-cols-2" onSubmit={handleAddFighter}>
+                <label className="block text-sm text-slate-300">
+                  Name
+                  <input
+                    value={fighterName}
+                    onChange={(event) => setFighterName(event.target.value)}
+                    placeholder="Rogue Titan"
+                    className="mt-3 w-full rounded-2xl border border-[#b07b2e]/40 bg-[#121212] px-4 py-3 text-white outline-none transition focus:border-amber-300/80 focus:ring-2 focus:ring-amber-300/20"
+                  />
+                </label>
+                <label className="block text-sm text-slate-300">
+                  Role
+                  <input
+                    value={fighterRole}
+                    onChange={(event) => setFighterRole(event.target.value)}
+                    placeholder="Storm Caller"
+                    className="mt-3 w-full rounded-2xl border border-[#b07b2e]/40 bg-[#121212] px-4 py-3 text-white outline-none transition focus:border-amber-300/80 focus:ring-2 focus:ring-amber-300/20"
+                  />
+                </label>
+                <label className="block text-sm text-slate-300 sm:col-span-2">
+                  Power Tier
+                  <input
+                    value={fighterPower}
+                    onChange={(event) => setFighterPower(event.target.value)}
+                    placeholder="Bronze, Silver, Gold"
+                    className="mt-3 w-full rounded-2xl border border-[#b07b2e]/40 bg-[#121212] px-4 py-3 text-white outline-none transition focus:border-amber-300/80 focus:ring-2 focus:ring-amber-300/20"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  className="mt-2 inline-flex w-full items-center justify-center rounded-2xl bg-amber-400 px-6 py-3 text-sm font-semibold text-black transition hover:bg-amber-300 sm:col-span-2"
+                >
+                  Add Fighter
+                </button>
+              </form>
+            </div>
+
+            <div className="rounded-[2rem] border border-[#b07b2e]/30 bg-[#0b0b0b]/95 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.4)]">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">DM Status</p>
+                  <h2 className="mt-4 text-3xl font-semibold text-white">Live campaign pulse</h2>
+                </div>
+                <span className="rounded-full bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-amber-200">
+                  V1 Mock</span>
+              </div>
+
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {statusItems.map((item) => (
+                  <div key={item.label} className="rounded-3xl border border-[#b07b2e]/20 bg-[#111111] p-5">
+                    <p className="text-xs uppercase tracking-[0.35em] text-slate-400">{item.label}</p>
+                    <p className="mt-3 text-2xl font-semibold text-white">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <aside className="space-y-8">
+            <div className="rounded-[2rem] border border-[#b07b2e]/30 bg-[#0b0b0b]/95 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.4)]">
+              <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Content Idea</p>
+              <h2 className="mt-4 text-3xl font-semibold text-white">Pipeline inspiration</h2>
+              <p className="mt-3 text-slate-400">
+                Fresh concepts for your Media Empire, ready to deploy in the next session.
+              </p>
+              <div className="mt-6 space-y-4">
+                {contentIdeas.map((idea) => (
+                  <div key={idea} className="rounded-3xl border border-[#b07b2e]/20 bg-[#121212] p-5">
+                    <p className="text-sm text-amber-100">{idea}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-[#b07b2e]/30 bg-[#0b0b0b]/95 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.4)]">
+              <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Quick win</p>
+              <h2 className="mt-4 text-3xl font-semibold text-white">Daily update</h2>
+              <div className="mt-6 space-y-4 rounded-3xl border border-[#b07b2e]/20 bg-[#111111] p-5">
+                <p className="text-sm text-slate-400">Today's focus: lock in fighter recruitment, finalize the next battle stream, and confirm DM pacing.</p>
+                <div className="grid gap-3 text-sm sm:grid-cols-2">
+                  <div className="rounded-3xl bg-[#121212] p-4">
+                    <p className="text-amber-200 font-semibold">Next Stream</p>
+                    <p className="mt-2 text-slate-300">Tomorrow 8 PM</p>
+                  </div>
+                  <div className="rounded-3xl bg-[#121212] p-4">
+                    <p className="text-amber-200 font-semibold">Active Goals</p>
+                    <p className="mt-2 text-slate-300">3 targets</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  );
+}

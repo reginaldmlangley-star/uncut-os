@@ -53,7 +53,7 @@ export default function LoginPage() {
 
       console.log("Login successful:", data);
       window.alert("Success!");
-      router.push("/files");
+      router.push("/dashboard");
     } catch (err) {
       console.error("Unexpected login error:", err);
       window.alert("An unexpected error occurred. Check the console.");
