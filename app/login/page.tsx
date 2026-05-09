@@ -1,6 +1,54 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+);
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  async function handleLogin() {
+    if (!email || !password) {
+      alert("Please enter both email and password.");
+      return;
+    }
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      const missing = [];
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push("NEXT_PUBLIC_SUPABASE_URL");
+      if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+      const message = `Missing Supabase env vars: ${missing.join(", ")}`;
+      console.error(message);
+      alert(message);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error("Supabase login error:", error);
+        alert(`Login failed: ${error.message}`);
+        return;
+      }
+
+      console.log("Login successful:", data);
+      alert("Login successful");
+    } catch (err) {
+      console.error("Unexpected login error:", err);
+      alert("An unexpected error occurred. Check the console.");
+    }
+  }
+
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 py-20 text-center">
@@ -11,11 +59,13 @@ export default function LoginPage() {
             Sign in to continue to the Operating System of the Future.
           </p>
 
-          <form className="mt-10 space-y-5 text-left">
+          <div className="mt-10 space-y-5 text-left">
             <label className="block text-sm font-semibold text-slate-200">
               Email
               <input
                 type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@example.com"
                 className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-white/20 focus:ring-2 focus:ring-white/10"
               />
@@ -24,17 +74,20 @@ export default function LoginPage() {
               Password
               <input
                 type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
                 placeholder="••••••••"
                 className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-white/20 focus:ring-2 focus:ring-white/10"
               />
             </label>
             <button
               type="button"
+              onClick={handleLogin}
               className="w-full rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-slate-200"
             >
               Login
             </button>
-          </form>
+          </div>
 
           <div className="mt-8 text-sm text-slate-500">
             <Link href="/" className="font-semibold text-slate-100 hover:text-white">
