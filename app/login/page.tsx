@@ -16,8 +16,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   async function handleLogin() {
+    console.log("Login attempt started with email:", email);
+
     if (!email || !password) {
-      alert("Please enter both email and password.");
+      const errorMsg = "Please enter both email and password.";
+      console.error(errorMsg);
+      alert(errorMsg);
       return;
     }
 
@@ -31,7 +35,10 @@ export default function LoginPage() {
       return;
     }
 
+    console.log("Supabase client initialized with URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+
     try {
+      console.log("Calling supabase.auth.signInWithPassword...");
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
