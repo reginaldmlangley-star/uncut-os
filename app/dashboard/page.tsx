@@ -1,22 +1,64 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+);
 
 export default function DashboardPage() {
   const [fighterName, setFighterName] = useState("");
   const [fighterRole, setFighterRole] = useState("");
   const [fighterPower, setFighterPower] = useState("");
 
-  function handleAddFighter(event: React.FormEvent<HTMLFormElement>) {
+  async function handleAddFighter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     if (!fighterName || !fighterRole) {
-      window.alert("Enter fighter name and role to add.");
+      const errorMsg = "Enter fighter name and role to add.";
+      console.error(errorMsg);
+      window.alert(errorMsg);
       return;
     }
-    window.alert(`Added fighter: ${fighterName} (${fighterRole})`);
-    setFighterName("");
-    setFighterRole("");
-    setFighterPower("");
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      const missing = [];
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push("NEXT_PUBLIC_SUPABASE_URL");
+      if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+      const errorMsg = `Missing Supabase env vars: ${missing.join(", ")}`;
+      console.error(errorMsg);
+      window.alert(errorMsg);
+      return;
+    }
+
+    console.log("INSERT_REQUEST:", { name: fighterName, role: fighterRole, power: fighterPower });
+
+    try {
+      const { data, error } = await supabase.from("fighters").insert([
+        {
+          name: fighterName,
+          role: fighterRole,
+          power: fighterPower || null,
+        },
+      ]);
+
+      if (error) {
+        console.error("Supabase insert error:", error);
+        window.alert(`Add fighter failed: ${error.message}`);
+        return;
+      }
+
+      console.log("Supabase insert success:", data);
+      window.alert(`Added fighter: ${fighterName} (${fighterRole})`);
+      setFighterName("");
+      setFighterRole("");
+      setFighterPower("");
+    } catch (err) {
+      console.error("Unexpected Supabase insert error:", err);
+      window.alert("Unexpected error adding fighter. Check console.");
+    }
   }
 
   const statusItems = [
