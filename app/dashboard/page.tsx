@@ -48,13 +48,11 @@ export default function DashboardPage() {
 
       if (data) {
         const interviewsWithNames = data.map((interview: any) => {
-          let fighterName = "Unknown";
+          let fighterName = `ID: ${interview.interviewee_id || interview.id}`;
           if (interview.fighters?.name) {
             fighterName = interview.fighters.name;
           } else if (interview.fighters?.[0]?.name) {
             fighterName = interview.fighters[0].name;
-          } else if (interview.interviewee_id) {
-            fighterName = `ID: ${interview.interviewee_id}`;
           }
           return {
             ...interview,
