@@ -44,7 +44,7 @@ export default function DashboardPage() {
       if (data) {
         const interviewsWithNames = data.map((interview: any) => ({
           ...interview,
-          fighter_name: interview.fighter_id || "Unknown",
+          fighter_name: interview.interviewee_id || "Unknown",
         }));
         console.log("Processed interviews:", interviewsWithNames);
         setInterviews(interviewsWithNames);
@@ -248,7 +248,7 @@ export default function DashboardPage() {
                   interviews.map((interview) => (
                     <div key={interview.id} className="rounded-3xl border border-[#b07b2e]/20 bg-[#121212] p-5">
                       <p className="text-sm font-semibold text-amber-100">{interview.fighter_name}</p>
-                      <p className="mt-2 text-xs text-slate-400">{new Date(interview.date).toLocaleDateString()}</p>
+                      <p className="mt-2 text-xs text-slate-400">{new Date(interview.scheduled_at).toLocaleDateString()}</p>
                       {interview.notes && <p className="mt-2 text-sm text-slate-300">{interview.notes}</p>}
                     </div>
                   ))
