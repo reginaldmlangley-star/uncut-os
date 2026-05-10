@@ -27,6 +27,7 @@ export default function DashboardPage() {
   }, []);
 
   async function loadInterviews() {
+    console.log("Loading interviews...");
     try {
       const { data, error } = await supabase
         .from("interviews")
@@ -45,12 +46,17 @@ export default function DashboardPage() {
         return;
       }
 
+      console.log("Raw interviews data:", data);
+
       if (data) {
         const interviewsWithNames = data.map((interview: any) => ({
           ...interview,
           fighter_name: interview.fighters?.name || "Unknown",
         }));
+        console.log("Processed interviews:", interviewsWithNames);
         setInterviews(interviewsWithNames);
+      } else {
+        console.log("No interviews data returned");
       }
     } catch (err) {
       console.error("Unexpected error loading interviews:", err);
@@ -224,8 +230,18 @@ export default function DashboardPage() {
             </div>
 
             <div className="rounded-[2rem] border border-[#b07b2e]/30 bg-[#0b0b0b]/95 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.4)]">
-              <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Upcoming Interviews</p>
-              <h2 className="mt-4 text-3xl font-semibold text-white">Scheduled sessions</h2>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Upcoming Interviews</p>
+                  <h2 className="mt-4 text-3xl font-semibold text-white">Scheduled sessions</h2>
+                </div>
+                <button
+                  onClick={loadInterviews}
+                  className="rounded-full bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-amber-200 hover:bg-amber-300/20"
+                >
+                  Refresh
+                </button>
+              </div>
               <p className="mt-3 text-slate-400">
                 Fighter interviews lined up for your Media Empire content.
               </p>
