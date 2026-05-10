@@ -31,18 +31,11 @@ export default function DashboardPage() {
     try {
       const { data, error } = await supabase
         .from("interviews")
-        .select(`
-          id,
-          fighter_id,
-          date,
-          notes,
-          fighters (
-            name
-          )
-        `);
+        .select("*");
 
       if (error) {
         console.error("Error loading interviews:", error);
+        window.alert(`Fetch failed: ${error.message}`);
         return;
       }
 
@@ -51,7 +44,7 @@ export default function DashboardPage() {
       if (data) {
         const interviewsWithNames = data.map((interview: any) => ({
           ...interview,
-          fighter_name: interview.fighters?.name || "Unknown",
+          fighter_name: interview.fighter_id || "Unknown",
         }));
         console.log("Processed interviews:", interviewsWithNames);
         setInterviews(interviewsWithNames);
@@ -60,6 +53,7 @@ export default function DashboardPage() {
       }
     } catch (err) {
       console.error("Unexpected error loading interviews:", err);
+      window.alert("Unexpected error loading interviews. Check console.");
     }
   }
 
