@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -8,10 +8,54 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 );
 
+type Interview = {
+  id: string;
+  fighter_id: string;
+  date: string;
+  notes?: string;
+  fighter_name?: string;
+};
+
 export default function DashboardPage() {
   const [fighterName, setFighterName] = useState("");
   const [fighterRole, setFighterRole] = useState("");
   const [fighterPower, setFighterPower] = useState("");
+  const [interviews, setInterviews] = useState<Interview[]>([]);
+
+  useEffect(() => {
+    loadInterviews();
+  }, []);
+
+  async function loadInterviews() {
+    try {
+      const { data, error } = await supabase
+        .from("interviews")
+        .select(`
+          id,
+          fighter_id,
+          date,
+          notes,
+          fighters (
+            name
+          )
+        `);
+
+      if (error) {
+        console.error("Error loading interviews:", error);
+        return;
+      }
+
+      if (data) {
+        const interviewsWithNames = data.map((interview: any) => ({
+          ...interview,
+          fighter_name: interview.fighters?.name || "Unknown",
+        }));
+        setInterviews(interviewsWithNames);
+      }
+    } catch (err) {
+      console.error("Unexpected error loading interviews:", err);
+    }
+  }
 
   async function handleAddFighter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -176,6 +220,29 @@ export default function DashboardPage() {
                     <p className="text-sm text-amber-100">{idea}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-[#b07b2e]/30 bg-[#0b0b0b]/95 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.4)]">
+              <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Upcoming Interviews</p>
+              <h2 className="mt-4 text-3xl font-semibold text-white">Scheduled sessions</h2>
+              <p className="mt-3 text-slate-400">
+                Fighter interviews lined up for your Media Empire content.
+              </p>
+              <div className="mt-6 space-y-4">
+                {interviews.length === 0 ? (
+                  <div className="rounded-3xl border border-[#b07b2e]/20 bg-[#121212] p-5">
+                    <p className="text-sm text-slate-400">No upcoming interviews scheduled.</p>
+                  </div>
+                ) : (
+                  interviews.map((interview) => (
+                    <div key={interview.id} className="rounded-3xl border border-[#b07b2e]/20 bg-[#121212] p-5">
+                      <p className="text-sm font-semibold text-amber-100">{interview.fighter_name}</p>
+                      <p className="mt-2 text-xs text-slate-400">{new Date(interview.date).toLocaleDateString()}</p>
+                      {interview.notes && <p className="mt-2 text-sm text-slate-300">{interview.notes}</p>}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
