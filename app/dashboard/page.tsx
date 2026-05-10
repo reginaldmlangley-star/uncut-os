@@ -10,8 +10,10 @@ const supabase = createClient(
 
 type Interview = {
   id: string;
-  fighter_id: string;
-  date: string;
+  fighter_id?: string;
+  interviewee_id?: string;
+  date?: string;
+  scheduled_at?: string;
   notes?: string;
   fighter_name?: string;
 };
@@ -260,8 +262,12 @@ export default function DashboardPage() {
                 ) : (
                   interviews.map((interview) => (
                     <div key={interview.id} className="rounded-3xl border border-[#b07b2e]/20 bg-[#121212] p-5">
-                      <p className="text-sm font-semibold text-amber-100">{interview.fighter_name}</p>
-                      <p className="mt-2 text-xs text-slate-400">{new Date(interview.scheduled_at).toLocaleDateString()}</p>
+                      <p className="text-sm font-semibold text-amber-100">
+                        {interview.fighter_name || interview.interviewee_id || interview.fighter_id || `ID: ${interview.id}`}
+                      </p>
+                      <p className="mt-2 text-xs text-slate-400">
+                        {new Date(interview.scheduled_at || interview.date || new Date().toISOString()).toLocaleDateString()}
+                      </p>
                       {interview.notes && <p className="mt-2 text-sm text-slate-300">{interview.notes}</p>}
                     </div>
                   ))
