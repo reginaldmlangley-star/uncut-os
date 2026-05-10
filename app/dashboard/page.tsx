@@ -31,7 +31,12 @@ export default function DashboardPage() {
     try {
       const { data, error } = await supabase
         .from("interviews")
-        .select("*");
+        .select(`
+          *,
+          fighters (
+            name
+          )
+        `);
 
       if (error) {
         console.error("Error loading interviews:", error);
@@ -44,7 +49,7 @@ export default function DashboardPage() {
       if (data) {
         const interviewsWithNames = data.map((interview: any) => ({
           ...interview,
-          fighter_name: interview.interviewee_id || "Unknown",
+          fighter_name: interview.fighters?.name || "Unknown",
         }));
         console.log("Processed interviews:", interviewsWithNames);
         setInterviews(interviewsWithNames);
