@@ -16,6 +16,25 @@ type Interview = {
   scheduled_at?: string;
   notes?: string;
   fighter_name?: string;
+  fighters?: { name?: string } | Array<{ name?: string }>;
+};
+
+type Fighter = {
+  id: string;
+  name: string;
+  role?: string;
+  power?: string;
+  dm_status?: string;
+};
+
+type ContentItem = {
+  id: string;
+  title?: string;
+  status?: string;
+  fighter_id?: string;
+  fighter_name?: string;
+  notes?: string;
+  fighters?: { name?: string } | Array<{ name?: string }>;
 };
 
 export default function DashboardPage() {
@@ -23,9 +42,17 @@ export default function DashboardPage() {
   const [fighterRole, setFighterRole] = useState("");
   const [fighterPower, setFighterPower] = useState("");
   const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [fighters, setFighters] = useState<Fighter[]>([]);
+  const [contentItems, setContentItems] = useState<ContentItem[]>([]);
+  const [showSessionModal, setShowSessionModal] = useState(false);
+  const [sessionFighterId, setSessionFighterId] = useState("");
+  const [sessionDateTime, setSessionDateTime] = useState("");
+  const [sessionNotes, setSessionNotes] = useState("");
 
   useEffect(() => {
     loadInterviews();
+    loadFighters();
+    loadContentItems();
   }, []);
 
   async function loadInterviews() {
@@ -50,10 +77,10 @@ export default function DashboardPage() {
 
       if (data) {
         const interviewsWithNames = data.map((interview: any) => {
-          let fighterName = `ID: ${interview.interviewee_id || interview.id}`;
+          let fighterName = `ID: ${interview.interviewee_id || interview.fighter_id || interview.id}`;
           if (interview.fighters?.name) {
             fighterName = interview.fighters.name;
-          } else if (interview.fighters?.[0]?.name) {
+          } else if (Array.isArray(interview.fighters) && interview.fighters[0]?.name) {
             fighterName = interview.fighters[0].name;
           }
           return {
@@ -72,6 +99,58 @@ export default function DashboardPage() {
     }
   }
 
+  async function loadFighters() {
+    try {
+      const { data, error } = await supabase.from("fighters").select("id,name,role,power,dm_status");
+      if (error) {
+        console.error("Error loading fighters:", error);
+        window.alert(`Fighter fetch failed: ${error.message}`);
+        return;
+      }
+      setFighters(data || []);
+    } catch (err) {
+      console.error("Unexpected error loading fighters:", err);
+      window.alert("Unexpected error loading fighters. Check console.");
+    }
+  }
+
+  async function loadContentItems() {
+    try {
+      const { data, error } = await supabase
+        .from("content")
+        .select(`
+          *,
+          fighters (
+            name
+          )
+        `);
+
+      if (error) {
+        console.error("Error loading content items:", error);
+        window.alert(`Content fetch failed: ${error.message}`);
+        return;
+      }
+
+      const contentWithNames = (data || []).map((item: any) => {
+        let fighterName = item.fighter_id || "Unknown";
+        if (item.fighters?.name) {
+          fighterName = item.fighters.name;
+        } else if (Array.isArray(item.fighters) && item.fighters[0]?.name) {
+          fighterName = item.fighters[0].name;
+        }
+        return {
+          ...item,
+          fighter_name: fighterName,
+        };
+      });
+
+      setContentItems(contentWithNames);
+    } catch (err) {
+      console.error("Unexpected error loading content items:", err);
+      window.alert("Unexpected error loading content items. Check console.");
+    }
+  }
+
   async function handleAddFighter(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -81,18 +160,6 @@ export default function DashboardPage() {
       window.alert(errorMsg);
       return;
     }
-
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      const missing = [];
-      if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push("NEXT_PUBLIC_SUPABASE_URL");
-      if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-      const errorMsg = `Missing Supabase env vars: ${missing.join(", ")}`;
-      console.error(errorMsg);
-      window.alert(errorMsg);
-      return;
-    }
-
-    console.log("INSERT_REQUEST:", { name: fighterName, role: fighterRole, power: fighterPower });
 
     try {
       const { data, error } = await supabase.from("fighters").insert([
@@ -114,9 +181,46 @@ export default function DashboardPage() {
       setFighterName("");
       setFighterRole("");
       setFighterPower("");
+      loadFighters();
     } catch (err) {
       console.error("Unexpected Supabase insert error:", err);
       window.alert("Unexpected error adding fighter. Check console.");
+    }
+  }
+
+  async function handleCreateSession(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!sessionFighterId || !sessionDateTime) {
+      window.alert("Choose a fighter and a date/time for the session.");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.from("interviews").insert([
+        {
+          fighter_id: sessionFighterId,
+          scheduled_at: sessionDateTime,
+          notes: sessionNotes || null,
+        },
+      ]);
+
+      if (error) {
+        console.error("Session insert error:", error);
+        window.alert(`Add session failed: ${error.message}`);
+        return;
+      }
+
+      console.log("Session created:", data);
+      window.alert("Session added successfully.");
+      setShowSessionModal(false);
+      setSessionFighterId("");
+      setSessionDateTime("");
+      setSessionNotes("");
+      loadInterviews();
+    } catch (err) {
+      console.error("Unexpected session insert error:", err);
+      window.alert("Unexpected error creating session. Check console.");
     }
   }
 
@@ -127,11 +231,13 @@ export default function DashboardPage() {
     { label: "Session Readiness", value: "Ready", bronze: false },
   ];
 
-  const contentIdeas = [
-    "Immersive fight club broadcast with hidden lore reveals",
-    "Bronze alliance fighter showcase video series",
-    "Daily battle debrief podcast clip for premium members",
-  ];
+  const recruitmentItems = fighters.map((fighter) => {
+    const status = fighter.dm_status || (fighter.power ? "Warm" : "Needs DM");
+    return {
+      ...fighter,
+      recruitment_status: status,
+    };
+  });
 
   return (
     <main className="min-h-screen bg-[#050505] text-slate-100">
@@ -224,36 +330,27 @@ export default function DashboardPage() {
 
           <aside className="space-y-8">
             <div className="rounded-[2rem] border border-[#b07b2e]/30 bg-[#0b0b0b]/95 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.4)]">
-              <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Content Idea</p>
-              <h2 className="mt-4 text-3xl font-semibold text-white">Pipeline inspiration</h2>
-              <p className="mt-3 text-slate-400">
-                Fresh concepts for your Media Empire, ready to deploy in the next session.
-              </p>
-              <div className="mt-6 space-y-4">
-                {contentIdeas.map((idea) => (
-                  <div key={idea} className="rounded-3xl border border-[#b07b2e]/20 bg-[#121212] p-5">
-                    <p className="text-sm text-amber-100">{idea}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[2rem] border border-[#b07b2e]/30 bg-[#0b0b0b]/95 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.4)]">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Upcoming Interviews</p>
                   <h2 className="mt-4 text-3xl font-semibold text-white">Scheduled sessions</h2>
                 </div>
-                <button
-                  onClick={loadInterviews}
-                  className="rounded-full bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-amber-200 hover:bg-amber-300/20"
-                >
-                  Refresh
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={loadInterviews}
+                    className="rounded-full bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-amber-200 hover:bg-amber-300/20"
+                  >
+                    Refresh
+                  </button>
+                  <button
+                    onClick={() => setShowSessionModal(true)}
+                    className="rounded-full bg-amber-400 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-black hover:bg-amber-300"
+                  >
+                    Add Session
+                  </button>
+                </div>
               </div>
-              <p className="mt-3 text-slate-400">
-                Fighter interviews lined up for your Media Empire content.
-              </p>
+              <p className="mt-3 text-slate-400">Fighter interviews lined up for your Media Empire content.</p>
               <div className="mt-6 space-y-4">
                 {interviews.length === 0 ? (
                   <div className="rounded-3xl border border-[#b07b2e]/20 bg-[#121212] p-5">
@@ -276,24 +373,134 @@ export default function DashboardPage() {
             </div>
 
             <div className="rounded-[2rem] border border-[#b07b2e]/30 bg-[#0b0b0b]/95 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.4)]">
-              <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Quick win</p>
-              <h2 className="mt-4 text-3xl font-semibold text-white">Daily update</h2>
-              <div className="mt-6 space-y-4 rounded-3xl border border-[#b07b2e]/20 bg-[#111111] p-5">
-                <p className="text-sm text-slate-400">Today's focus: lock in fighter recruitment, finalize the next battle stream, and confirm DM pacing.</p>
-                <div className="grid gap-3 text-sm sm:grid-cols-2">
-                  <div className="rounded-3xl bg-[#121212] p-4">
-                    <p className="text-amber-200 font-semibold">Next Stream</p>
-                    <p className="mt-2 text-slate-300">Tomorrow 8 PM</p>
-                  </div>
-                  <div className="rounded-3xl bg-[#121212] p-4">
-                    <p className="text-amber-200 font-semibold">Active Goals</p>
-                    <p className="mt-2 text-slate-300">3 targets</p>
-                  </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Content War Room</p>
+                  <h2 className="mt-4 text-3xl font-semibold text-white">Viral clip pipeline</h2>
                 </div>
+                <button
+                  onClick={loadContentItems}
+                  className="rounded-full bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-amber-200 hover:bg-amber-300/20"
+                >
+                  Refresh
+                </button>
+              </div>
+              <p className="mt-3 text-slate-400">Track clip ideas, editing status, and target fighters.</p>
+              <div className="mt-6 space-y-4">
+                {contentItems.length === 0 ? (
+                  <div className="rounded-3xl border border-[#b07b2e]/20 bg-[#121212] p-5">
+                    <p className="text-sm text-slate-400">No content items available yet.</p>
+                  </div>
+                ) : (
+                  contentItems.map((item) => (
+                    <div key={item.id} className="rounded-3xl border border-[#b07b2e]/20 bg-[#121212] p-5">
+                      <p className="text-sm uppercase tracking-[0.35em] text-slate-400">{item.status || "Idea"}</p>
+                      <h3 className="mt-2 text-lg font-semibold text-white">{item.title || item.notes || "Untitled content"}</h3>
+                      <p className="mt-2 text-sm text-slate-300">Fighter: {item.fighter_name || item.fighter_id || "Unknown"}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-[#b07b2e]/30 bg-[#0b0b0b]/95 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.4)]">
+              <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Recruitment Pulse</p>
+              <h2 className="mt-4 text-3xl font-semibold text-white">DM outreach tracker</h2>
+              <p className="mt-3 text-slate-400">See who is warm and who still needs a DM match.</p>
+              <div className="mt-6 grid gap-4">
+                {recruitmentItems.length === 0 ? (
+                  <div className="rounded-3xl border border-[#b07b2e]/20 bg-[#121212] p-5">
+                    <p className="text-sm text-slate-400">No fighters in the system yet.</p>
+                  </div>
+                ) : (
+                  recruitmentItems.map((fighter) => (
+                    <div key={fighter.id} className="rounded-3xl border border-[#b07b2e]/20 bg-[#121212] p-5">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="text-sm text-slate-400">{fighter.role || "Fighter"}</p>
+                          <p className="mt-2 text-lg font-semibold text-white">{fighter.name || `ID: ${fighter.id}`}</p>
+                        </div>
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase ${fighter.recruitment_status === "Warm" ? "bg-amber-300/15 text-amber-200" : "bg-amber-400/15 text-amber-100"}`}>
+                          {fighter.recruitment_status}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </aside>
         </div>
+
+        {showSessionModal ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+            <div className="w-full max-w-2xl rounded-[1.75rem] border border-[#b07b2e]/40 bg-[#0c0c0c]/95 p-8 shadow-[0_30px_120px_rgba(0,0,0,0.85)]">
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.35em] text-amber-300/80">Add Session</p>
+                  <h2 className="mt-2 text-3xl font-semibold text-white">Schedule a new interview</h2>
+                </div>
+                <button
+                  onClick={() => setShowSessionModal(false)}
+                  className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20"
+                >
+                  Close
+                </button>
+              </div>
+              <form className="space-y-5" onSubmit={handleCreateSession}>
+                <label className="block text-sm text-slate-300">
+                  Fighter
+                  <select
+                    value={sessionFighterId}
+                    onChange={(event) => setSessionFighterId(event.target.value)}
+                    className="mt-3 w-full rounded-2xl border border-[#b07b2e]/40 bg-[#121212] px-4 py-3 text-white outline-none transition focus:border-amber-300/80 focus:ring-2 focus:ring-amber-300/20"
+                  >
+                    <option value="">Select fighter</option>
+                    {fighters.map((fighter) => (
+                      <option key={fighter.id} value={fighter.id}>
+                        {fighter.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-sm text-slate-300">
+                  Date & Time
+                  <input
+                    type="datetime-local"
+                    value={sessionDateTime}
+                    onChange={(event) => setSessionDateTime(event.target.value)}
+                    className="mt-3 w-full rounded-2xl border border-[#b07b2e]/40 bg-[#121212] px-4 py-3 text-white outline-none transition focus:border-amber-300/80 focus:ring-2 focus:ring-amber-300/20"
+                  />
+                </label>
+                <label className="block text-sm text-slate-300">
+                  Notes
+                  <textarea
+                    value={sessionNotes}
+                    onChange={(event) => setSessionNotes(event.target.value)}
+                    placeholder="Campaign angle, clip hook, DM follow-up"
+                    className="mt-3 w-full rounded-2xl border border-[#b07b2e]/40 bg-[#121212] px-4 py-3 text-white outline-none transition focus:border-amber-300/80 focus:ring-2 focus:ring-amber-300/20"
+                    rows={4}
+                  />
+                </label>
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowSessionModal(false)}
+                    className="inline-flex rounded-2xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="inline-flex rounded-2xl bg-amber-400 px-6 py-3 text-sm font-semibold text-black transition hover:bg-amber-300"
+                  >
+                    Save Session
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : null}
       </div>
     </main>
   );
