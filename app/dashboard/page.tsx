@@ -305,7 +305,8 @@ export default function DashboardPage() {
                 <div className="rounded-3xl bg-[#0D0D0D] p-5">
                   <p className="text-sm uppercase tracking-[0.35em] text-slate-500">DM Outreach</p>
                   <p className="mt-3 text-xl font-semibold text-white">{totalFighters > 0 ? "Warm" : "Standby"}</p>
-                  <p className="mt-2 text-sm text-slate-400">{totalFighters > 0 ? `${totalFighters} fighters have DM readiness` : 'No fighters ready'}</p>
+                  <p className="mt-2 text-sm text-slate-400">{totalFighters} fighters are ready for DM outreach</p>
+
 
                 </div>
               </div>
