@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../supabaseClient";
+// 🟢 FIXED LINE 4: Points safely to the root directory where your file lives
+import { supabase } from "../../supabaseClient";
 
 export default function DashboardPage() {
   const [fighters, setFighters] = useState<any[]>([]);
